@@ -40,33 +40,83 @@ def go(config: DictConfig):
     if "preprocess" in steps_to_execute:
 
         ## YOUR CODE HERE: call the preprocess step
-        pass
+        _ = mlflow.run(
+            os.path.join(root_path, "preprocess"),
+            "main",
+            parameters={
+                "input_artifact": "raw_data.parquet:latest",
+                "artifact_name": "preprocessed_data.csv",
+                "artifact_type": "preprocessed_data",
+                "artifact_description": "Data with preprocessing applied"
+            },
+        )
 
     if "check_data" in steps_to_execute:
 
         ## YOUR CODE HERE: call the check_data step
-        pass
+        _ = mlflow.run(
+            os.path.join(root_path, "check_data"),
+            "main",
+            parameters={
+                "reference_artifact": config["data"]["reference_dataset"],
+                "sample_artifact": "preprocessed_data.csv:latest",
+                # ks is the predetermined significance threshold found in the config file and used for this test
+                "ks_alpha": config["data"]["ks_alpha"]
+            },
+        )
 
     if "segregate" in steps_to_execute:
 
         ## YOUR CODE HERE: call the segregate step
-        pass
+        _ = mlflow.run(
+            os.path.join(root_path, "segregate"),
+            "main",
+            parameters={
+                "imput_artifact": "preprocessed_data.csv:latest",
+                # use artifact_root instead of artifact_name because there will be two artifacts returned
+                "artifact_root": "data", # data_train.csv and data_test.csv
+                "test_size": config["data"]["test_size"],
+                "stratify": config["data"]["stratify"]
 
+            },
+        )
+
+    # this is the training and validation step
     if "random_forest" in steps_to_execute:
 
         # Serialize decision tree configuration
         model_config = os.path.abspath("random_forest_config.yml")
-
+        # this is a trick to make get the massive list of parameters in a yaml file
+        # to avoid having to type it in the parameters below
         with open(model_config, "w+") as fp:
             fp.write(OmegaConf.to_yaml(config["random_forest_pipeline"]))
 
         ## YOUR CODE HERE: call the random_forest step
-        pass
+        _ = mlflow.run(
+            os.path.join(root_path, "random_forest"),
+            "main",
+            parameters={
+                "train_data": "data_train.csv:latest",
+                "model_config": model_config,
+                "export_artifact": config["random_forest_pipeline"][export_artifact"],
+                "random_seed": config["main"]["random_seed"],
+                "val_size": config["data"]["test_size"],
+                "stratify": config["data"]["stratify"]
+            },
+
+        )
 
     if "evaluate" in steps_to_execute:
 
         ## YOUR CODE HERE: call the evaluate step
-        pass
+        _ = mlflow.run(
+            os.path.join(root_path, "evaluate"),
+            "main",
+            parameters={
+                "model_export": f"{config['random_forest_pipeline']['export_artifact']}:latest",
+                "test_data": "data_test.csv:latest"
+            },
+        )
 
 
 if __name__ == "__main__":

@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-import argparse
 import logging
+import argparse
 import pathlib
 import wandb
+
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
@@ -12,11 +13,20 @@ logger = logging.getLogger()
 def go(args):
 
     logger.info("Creating run exercise_1")
-
     # Create a W&B run in the project `exercise_1`. Set the option `job_type="upload_file"`:
+    run = wandb.init(project = 'exercise_1', job_type = 'upload_file')
 
-    # YOUR CODE HERE
+    logger.info("Creating artifact")
+    artifact = wandb.Artifact(
+        name = args.artifact_name,
+        type = args.artifact_type,
+        description = args.artifact_description
+    )
+    artifact.add_file(args.input_file)
 
+    logger.info('Logging artifact')
+    run.log_artifact(artifact)
+    "20 aphorisms about writing good python code"
     # Create an instance of the class `wandb.Artifact`. Use the `artifact_name` parameter to
     # fill the keyword `name` when constructing the `wandb.Artifact` class. Use the parameters
     # `artifact_type` and `artifact_description` to fill respectively the keyword `type` and

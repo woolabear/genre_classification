@@ -10,18 +10,21 @@ run = wandb.init(project="exercise_8", job_type="data_tests")
 
 @pytest.fixture(scope="session")
 def data():
-
+    # here our fixture reads two datasets instead of one
+    # and returns both
     local_path = run.use_artifact("exercise_6/data_train.csv:latest").file()
     sample1 = pd.read_csv(local_path)
 
     local_path = run.use_artifact("exercise_6/data_test.csv:latest").file()
     sample2 = pd.read_csv(local_path)
 
+    # returns a tuple that we use for the next function
     return sample1, sample2
 
 
 def test_kolmogorov_smirnov(data):
-
+    # data input is a tuple from the previous function
+    # this line unpacks the tuple
     sample1, sample2 = data
 
     numerical_columns = [
@@ -45,7 +48,15 @@ def test_kolmogorov_smirnov(data):
 
         # Use the 2-sample KS test (scipy.stats.ks_2sample) on the column
         # col
-        ts, p_value = None, None # YOUR CODE HERE
-
-        # Add an assertion so that the test fails if p_value > alpha_prime
         # YOUR CODE HERE
+        ts, p_value = scipy.stats.ks_2samp(
+            sample1[col],
+            sample2[col],
+            alternative='two-sided'
+        )
+        # Add an assertion so that the test fails if p_value > alpha_prime
+        # NOTE: as always, the p-value should be interpreted as the probability of
+        # obtaining a test statistic (TS) equal or more extreme that the one we got
+        # by chance, when the null hypothesis is true. If this probability is not
+        # large enough, this dataset should be looked at carefully, hence we fail
+        assert p_value > alpha_prime
