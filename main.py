@@ -23,14 +23,14 @@ def go(config: DictConfig):
         assert isinstance(config["main"]["execute_steps"], list)
         steps_to_execute = config["main"]["execute_steps"]
 
-    # Download step
+    # Download step - saves them in the artifact store
     if "download" in steps_to_execute:
 
         _ = mlflow.run(
-            os.path.join(root_path, "download"),
-            "main",
+            os.path.join(root_path, "download"), # path to our component
+            "main", # the entry point is main
             parameters={
-                "file_url": config["data"]["file_url"],
+                "file_url": config["data"]["file_url"], # found in config file
                 "artifact_name": "raw_data.parquet",
                 "artifact_type": "raw_data",
                 "artifact_description": "Data as downloaded"
@@ -40,12 +40,31 @@ def go(config: DictConfig):
     if "preprocess" in steps_to_execute:
 
         ## YOUR CODE HERE: call the preprocess step
-        pass
+        _ = mlflow.run(
+            os.path.join(root_path, "preprocess"),
+            "main",
+            parameters={
+                # input artifact is the output artifact of the last step
+                "input_artifact": "raw_data.parquet:latest",
+                "artifact_name": "preprocessed_data.csv",
+                "artifact_type": "preprocessed_data",
+                "artifact_description": "Data after preprocessing completed"
+
+            },
+        )
 
     if "check_data" in steps_to_execute:
 
         ## YOUR CODE HERE: call the check_data step
-        pass
+        _ = mlflow.run(
+            os.path.join(root_path, "check_data"),
+            "main",
+            parameters={
+                "reference_artifact": config["data"]["reference_dataset"],
+                "sample_artifact": "preprocessed_data.csv:latest",
+                "ks_alpha": config["data"]["ks_alpha"]
+            },
+        )
 
     if "segregate" in steps_to_execute:
 
