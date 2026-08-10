@@ -20,8 +20,7 @@ def go(config: DictConfig):
         # This was passed on the command line as a comma-separated list of steps
         steps_to_execute = config["main"]["execute_steps"].split(",")
     else:
-        assert isinstance(config["main"]["execute_steps"], list)
-        steps_to_execute = config["main"]["execute_steps"]
+        steps_to_execute = list(config["main"]["execute_steps"])
 
     # Download step
     if "download" in steps_to_execute:
@@ -72,7 +71,7 @@ def go(config: DictConfig):
             os.path.join(root_path, "segregate"),
             "main",
             parameters={
-                "imput_artifact": "preprocessed_data.csv:latest",
+                "input_artifact": "preprocessed_data.csv:latest",
                 # use artifact_root instead of artifact_name because there will be two artifacts returned
                 "artifact_root": "data", # data_train.csv and data_test.csv
                 "test_size": config["data"]["test_size"],
@@ -98,7 +97,7 @@ def go(config: DictConfig):
             parameters={
                 "train_data": "data_train.csv:latest",
                 "model_config": model_config,
-                "export_artifact": config["random_forest_pipeline"][export_artifact"],
+                "export_artifact": config["random_forest_pipeline"]["export_artifact"],
                 "random_seed": config["main"]["random_seed"],
                 "val_size": config["data"]["test_size"],
                 "stratify": config["data"]["stratify"]
